@@ -4,8 +4,8 @@ Simple interface for setting and getting data from a redux store.
  
 We care about two things:
 
-1. How to insert data into the store
-1. How to get data from the store
+1. How to insert data into the redux store
+1. How to get data from the redux store
 
 For these things to be possible we need:
 
@@ -141,7 +141,7 @@ In this way everything relating to getting and setting data on a particular mode
 
 Final suggestions:
 
-* At some point you will need custom actions (e.g. for api responses). Use the redux-models versions as building blocks for these custom functions.
+* At some point you will need custom actions (e.g. for api responses). Use the redux-models versions as building blocks for these custom functions and add these to the actions.js file.
 * You can also keep your Normalizr schema in this directory `schema.js`, useful for wrangling api responses.
 
 ### React-Redux

@@ -86,9 +86,47 @@ describe('reducer', ()=> {
 
 
 
-describe('e2e', ()=> {
+describe('readme getting started examples', ()=> {
 
-  it('should add models', ()=> {
+  it('should work as advertised', ()=> {
+    
+    const modelNameString = 'my model';
+    const model2 = reducer('model2');
+    
+    const entityReducers = combineReducers({
+      [modelNameString]: reducer(modelNameString), 
+      model2, 
+      model3 : reducer('model3'),
+    });
+    
+    const topLevelReducer = combineReducers({
+      entities: entityReducers,
+    });
+
+    const store = createStore(topLevelReducer);
+
+    const modelInstance = {hello: 'world', example: true };
+
+    const storeAction = actions.create('my model')(1, modelInstance);
+
+    store.dispatch(storeAction);
+
+    store.dispatch(actions.create('my model')(2, { a: 1, example: false }));
+
+    store.dispatch(actions.create('my model')(3, { b: 2, c: true }));
+    
+    store.dispatch(actions.update('my model')(1, {newProperty: 'hello'}));
+
+    store.dispatch(actions.update('my model')(1, undefined, (entity)=> ({...entity, a: 3}) ));
+
+    selectors.get('my model')(store.getState());
+
+    selectors.get('my model')(store.getState(), {example: true});
+
+    selectors.get('model2')(store.getState());
+
+    selectors.getOne('my model')(store.getState(), { id:1 });
+
     
   });
 
