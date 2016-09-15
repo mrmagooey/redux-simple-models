@@ -84,8 +84,6 @@ describe('reducer', ()=> {
 
 });
 
-
-
 describe('readme getting started examples', ()=> {
 
   it('should work as advertised', ()=> {
