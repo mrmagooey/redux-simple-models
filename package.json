@@ -6,7 +6,8 @@
   "scripts": {
     "test": "NODE_ENV=test node_modules/.bin/mocha --compilers js:babel-core/register tests",
     "test-watch": "NODE_ENV=test node_modules/.bin/mocha --compilers js:babel-core/register --watch tests",
-    "test-coverage": "NODE_ENV=test nyc npm test"
+    "test-coverage": "NODE_ENV=test nyc npm test",
+    "build": "node_modules/.bin/"
   },
   "keywords": [
     "redux"

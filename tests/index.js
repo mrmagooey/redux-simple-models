@@ -66,18 +66,59 @@ describe('actions', function() {
 
 }); 
 
+
 describe('reducer', ()=> {
   
   it('can create reducers for models', () => {
     const modelName = 'wew lad';
-
     const myReducer = reducer(modelName);
-    
     const reducers = combineReducers({
       [modelName]: myReducer,
     });
-    
+  });
 
+});
+
+describe('selectors', ()=> {
+  const myModel = reducer('myModel');
+  const topLevelReducer = combineReducers({
+    entities: combineReducers({myModel}),
+  });
+  const store = createStore(topLevelReducer);
+  const models = {
+    1: {
+      c:1,
+      z:1,
+    },
+    2: {
+      d:1,
+      z:1,
+    },
+    'non integer id': {
+      blah: 'blah',
+      z:1,
+    }
+  };
+  store.dispatch(actions.bulkUpdate('myModel')(models));
+
+  it('can get models', () => {
+    const a = selectors.get('myModel')(store.getState());
+    assert.equal(a.length, 3);
+  });
+
+  it('can getOne models', () => {
+    const a = selectors.getOne('myModel')(store.getState(), {id:1});
+    assert.deepEqual(a, {id: 1, c:1, z:1});
+  });
+
+  it('getOne will complain about more than one model, but still return the first one', () => {
+    const a = selectors.getOne('myModel')(store.getState(), {z:1});
+    assert.deepEqual(a, {id: 1, c:1, z:1});
+  });
+
+  it('getOne will complain about not finding any models, and will return undefined', () => {
+    const a = selectors.getOne('myModel')(store.getState(), {wew:1});
+    assert.equal(a, undefined);
   });
 
 });
@@ -111,7 +152,6 @@ describe('readme getting started examples', ()=> {
                          'model3': {},
                        }
                      });
-
     store.dispatch(actions.create('my model')(2, { a: 1, example: false }));
     assert.deepEqual(store.getState(),
                      {
@@ -210,6 +250,7 @@ describe('readme getting started examples', ()=> {
                          'model3': {1: {c:1}, 2: {d:1}, 'non integer id': {blah: 'blah'}},
                        }
                      });
+
     const myModels = selectors.get('my model')(store.getState());
     assert.equal(myModels.length, 4);
     
@@ -224,9 +265,8 @@ describe('readme getting started examples', ()=> {
       {a:1, id: 1},
       {b:1, id: 2},
     ]);
-    console.log(store.getState());
-    const getOneExample = selectors.getOne('my model')(store.getState(), { id: '1' });
-    console.log(getOneExample);
-
+    
+    const getOneExample = selectors.getOne('my model')(store.getState(), { id: 1 });
+    assert.deepEqual(getOneExample, { hello: 'world', example: true, newProperty: 'hello', a: 3, id: 1 });
   });
 });
