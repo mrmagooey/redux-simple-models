@@ -9,7 +9,11 @@ export const get = (entityName, stateNamespace = 'entities') => (state, where = 
       if (Object.keys(where).length === 0) {
         return true;
       }
-      const fullEntity = { id: pair[0],
+      // this is trying to make integer ids into actual numbers,
+      // because integers are getting converted to strings in the reducer,
+      // which I think is a babel bug https://github.com/babel/babel/issues/4196
+      const idNumber = _.isNaN(Number(pair[0]))? pair[0] : Number(pair[0]);
+      const fullEntity = { id: idNumber,
                            ...pair[1] };
       return _.chain(where)
         .toPairs()
