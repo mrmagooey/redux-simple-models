@@ -1,6 +1,6 @@
 {
   "name": "redux-simple-models",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "getters and setters for redux models",
   "main": "src/index.js",
   "homepage": "https://github.com/mrmagooey/redux-models",
