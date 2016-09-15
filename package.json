@@ -1,5 +1,5 @@
 {
-  "name": "redux-models",
+  "name": "redux-simple-models",
   "version": "0.1.0",
   "description": "getters and setters for redux models",
   "main": "src/index.js",
@@ -44,9 +44,6 @@
     "lodash": "^4.15.0"
   },
   "browserify": {
-    "transform": ["browserify-shim"]
-  },
-  "browserify-shim": {
-    "lodash": "global:lodash"
+    "transform": [["babelify", {"presets": ["es2015"]}]]
   }
 }
