@@ -1,7 +1,9 @@
-# redux-models
+# redux-simple-models
 
 Simple interface for setting and getting data from a redux store.
- 
+
+## Introduction
+
 We care about two things:
 
 1. How to insert data into the redux store
@@ -13,6 +15,12 @@ For these things to be possible we need:
 * A standard data structure in the store (we follow normalizr's example)
 * A common set of actions (create, update and delete)
 * And finally, some standard interface for getting data from the store
+
+## Installation
+
+    npm install redux-simple-models --save
+
+Currently assumes it will be part of a browserify build process.
 
 ## Usage
 ### Reducer and store setup
