@@ -20,6 +20,15 @@ export const update = (modelName) => (id, modelObject, customReducer) => {
   };
 };
 
+export const bulkUpdate = (modelName) => (entities) => {
+  return {
+    type: `BULK_UPDATE_${modelName.toUpperCase()}`,
+    payload: {
+      entities,
+    },
+  };
+};
+
 export const del = (modelName) => (id) => {
   return {
     type: `DELETE_${modelName.toUpperCase()}`,
@@ -29,3 +38,11 @@ export const del = (modelName) => (id) => {
   };
 };
 
+export const allModelBulkUpdate = (entities) => {
+  return {
+    type: "BULK_UPDATE",
+    payload: {
+      entities,
+    },
+  };
+}

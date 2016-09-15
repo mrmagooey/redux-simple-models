@@ -52,6 +52,28 @@ We've given our new modelInstance the unique id `1`, and stored it in the store.
     store.dispatch(actions.create('my model')(2, { a: 1, example: false }))
     store.dispatch(actions.create('my model')(3, { b: 2, c: true }))
 
+We can also bulk create instances using the `bulkUpdate()` action. This will directly set the contents of the models store, overwriting existing models with the same id.
+
+    store.dispatch(actions.bulkUpdate('my model')(
+        {
+            2: {new: 'model data', overrides: 'old data', for: 'model id 2' },
+            4: {'this': 'is a new model'},
+        }
+    ))
+    
+If there are multiple models that we want to bulk create for (e.g. rehydrating the application state), we can use `allModelBulkUpdate()` achieve this. Because this function updates all models, it does not need to be specialised for a particular model.
+
+    const model2Updates = {1: {a:1}, 2: {b:1}};
+    const model3Updates = {1: {c:1}, 2: {d:1}, 'non integer id': {blah: 'blah'}};
+    store.dispatch(actions.allModelBulkUpdate({
+        model2: model2Updates,
+        model3: model3Updates,
+    }));
+
+The final state after all of this looks like:
+
+
+
 ### Updating instances
 
 Updating instances has a similar interface. It takes the instances unique id and an object containing the instance properties you want to overwrite.
