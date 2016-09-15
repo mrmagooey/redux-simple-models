@@ -46,10 +46,3 @@ export const getOne = (entityName, stateNamespace = 'entities') => (state, where
   }
 };
 
-export const getRelated = (entityName) => (state, where, relatedName) => {
-  const entity = getOne(entityName)(state, where);
-  const relatedEntities = entity[relatedName].map((relatedId) => {
-    return getOne(relatedName)(state, { id: relatedId });
-  });
-  return relatedEntities;
-};
