@@ -2,7 +2,7 @@
   "name": "redux-models",
   "version": "0.1.0",
   "description": "getters and setters for redux models",
-  "main": "index.js",
+  "main": "build/index.js",
   "scripts": {
     "test": "NODE_ENV=test node_modules/.bin/mocha --compilers js:babel-core/register tests",
     "test-watch": "NODE_ENV=test node_modules/.bin/mocha --compilers js:babel-core/register --watch tests",
@@ -34,5 +34,8 @@
     ],
     "sourceMap": false,
     "instrument": false
+  },
+  "dependencies": {
+    "lodash": "^4.15.0"
   }
 }
