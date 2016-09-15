@@ -4,7 +4,6 @@ const abstractReducer = (modelName, stateNamespace = 'entities') => (state = {},
   switch (action.type) {
 
     case `CREATE_${modelName.toUpperCase()}`:
-      // acts like upsert, will silently override existing things
       return {
         ...state,
         [action.payload.id]: action.payload.modelObject,
