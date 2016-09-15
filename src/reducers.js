@@ -11,21 +11,21 @@ const abstractReducer = (modelName, stateNamespace = 'entities') => (state = {},
       };
 
     case `UPDATE_${modelName.toUpperCase()}`:
-      if (_.has(action, 'customReducer')) {
+      console.log(action);
+      if (_.isFunction(action.payload.customReducer)) {
         return {
           ...state,
           [action.payload.id]: action.payload.customReducer(state[action.payload.id]),
         };
       }
-      if (_.isObject(action[modelName])) {
-        return {
-          ...state,
-          [action.payload.id]: {
-            ...state[action.payload.id],
-            ...action.payload.modelObject,
-          },
-        };
-      }
+      
+      return {
+        ...state,
+        [action.payload.id]: {
+          ...state[action.payload.id],
+          ...action.payload.modelObject,
+        },
+      };
 
     case `DELETE_${modelName.toUpperCase()}`:
       return _.omit(state, action.payload.id);
