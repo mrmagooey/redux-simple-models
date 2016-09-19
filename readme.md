@@ -20,7 +20,7 @@ For these things to be possible we need:
 
     npm install redux-simple-models --save
 
-Currently assumes it will be part of a browserify build process.
+This is a UMD build file, and so should work across various build systems and javascript environments.
 
 ## Usage
 ### Reducer and store setup
