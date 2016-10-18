@@ -3,27 +3,32 @@
 
 `redux-simple-models` is a simple interface for creating, updating, deleting and retrieving data from a redux store.
 
-Example (abridged) usage:
+Some example usage follows.
 
-    // store data in redux store
+Store data in redux store:
+
     > dispatch(myModelCreate({'some': 'model data'})); 
     > dispatch(myModelCreate({'example': 'usage', 'asdf': true}));
     
-    // get data from store (note automatic integer ids)
+Get data from store (note automatic integer ids):
+
     > myModelGet(state);
     [{id: 1, 'some': 'model data'}, {id: 2, 'example': 'usage', 'asdf': true}]
     
-    // get data from store satisfying some `where` parameters
+Get data from store satisfying some `where` parameters:
+
     > myModelGet(state, {'example': 'usage'})
     [{id: 1, 'example': 'usage', 'asdf': true}]
     
-    // Update data
+Update data:
+
     > dispatch(myModelUpdate(1, {'example': 'new'}))
     // GetOne will only get one model
     > myModelGetOne(state, {'example': 'new'})
     {id: 1, 'example': 'new', 'asdf': true}
 
-    // delete model by id
+Delete model by id
+
     > dispatch(myModelDelete(1))
     // get all models
     > myModelGet(state)
