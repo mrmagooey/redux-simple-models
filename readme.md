@@ -1,26 +1,43 @@
 # redux-simple-models
-
-Simple interface for setting and getting data from a redux store.
-
 ## Introduction
 
-We care about two things:
+`redux-simple-models` is a simple interface for creating, updating, deleting and retrieving data from a redux store.
 
-1. How to insert data into the redux store
-1. How to get data from the redux store
+Example (abridged) usage:
 
-For these things to be possible we need:
+    // store data in redux store
+    > dispatch(myModelCreate({'some': 'model data'})); 
+    > dispatch(myModelCreate({'example': 'usage', 'asdf': true}));
+    
+    // get data from store (note automatic integer ids)
+    > myModelGet(state);
+    [{id: 1, 'some': 'model data'}, {id: 2, 'example': 'usage', 'asdf': true}]
+    
+    // get data from store satisfying some `where` parameters
+    > myModelGet(state, {'example': 'usage'})
+    [{id: 1, 'example': 'usage', 'asdf': true}]
+    
+    // Update data
+    > dispatch(myModelUpdate(1, {'example': 'new'}))
+    // GetOne will only get one model
+    > myModelGetOne(state, {'example': 'new'})
+    {id: 1, 'example': 'new', 'asdf': true}
 
-* A standard reducer
-* A standard data structure in the store (we follow normalizr's example)
-* A common set of actions (create, update and delete)
-* And finally, some standard interface for getting data from the store
+    // delete model by id
+    > dispatch(myModelDelete(1))
+    // get all models
+    > myModelGet(state)
+    [{id: 2, 'example': 'usage', 'asdf': true}]
+
+These examples assume we have a model called `myModel`, and have created our model functions incorporating this model name. These `myModel*` functions could be called whatever the user desires.
+
+Below are more complete instructions on how to get up and running with `redux-simple-models`.
 
 ## Installation
 
     npm install redux-simple-models --save
 
-This is a UMD build file, and so should work across various build systems and javascript environments.
+This is a UMD build file, and should work across various build systems and javascript environments.
 
 ## Usage
 ### Reducer and store setup
@@ -29,93 +46,142 @@ First setup the store with the required model reducers. Each model needs its own
     import { actions, reducer, selectors } from 'redux-models';
     import { createStore } from 'redux';
     
-    // due to es6 there's a few ways we can define new reducers, pick whatever you like
-    const modelNameString = 'my model';
-    const model2 = reducer('model2');
-    
     const entityReducers = combineReducers({
-        [modelNameString]: reducer(modelNameString), // es6 computed property names
-        model2, // es6 shorthand
-        model3 : reducer('model3'), // normal object literal usage
-    })
+        myModel: reducer('myModel'), // a single model called 'myModel'
+    });
     
     const topLevelReducer = combineReducers({
-        entities: entityReducers,
-    })
+        entities: entityReducers, 
+    });
 
-    const store = createStore(topLevelReducer)
-
-Note that each reducer expects to be mounted at the same name as it is passed.
+    const store = createStore(topLevelReducer);
 
 ### Creating instances
 
-Adding a model to the store:
+We can add models to the store using `actions.create` and telling it the name of the model each time:
 
-    const modelInstance = {hello: 'world', example: true };
-    const storeAction = actions.create('my model')(1, modelInstance);
+    const modelInstance = { hello: 'world', example: true };
+    const storeAction = actions.create('my model', true)(modelInstance);
     store.dispatch(storeAction);
 
-We've given our new modelInstance the unique id `1`, and stored it in the store. If we add additional instances we will need to give these unique id's as well, unless we want to overwrite previous models.
+But, for convenience, we create a customised `create` function for our model:
 
-    store.dispatch(actions.create('my model')(2, { a: 1, example: false }))
-    store.dispatch(actions.create('my model')(3, { b: 2, c: true }))
+    const myModelCreate = actions.create('myModel', true);
 
-We can also bulk create instances using the `bulkUpdate()` action. This will directly set the contents of the models store, overwriting existing models with the same id.
+Then we simply pass model data directly to this customised function (technically a closure):
 
-    store.dispatch(actions.bulkUpdate('my model')(
+    store.dispatch(myModelCreate({some: 'test', data: 'here'}));
+    store.dispatch(myModelCreate({some: 'more test', data: 'here'}));
+
+The `true` argument in `actions.create` is for the autoPk option which provides us with automatically incrementing integer primary keys, resulting in the store data structure looking like:
+
+    >> store.getState()
+    {
+       "entities": {
+           "myModel": {
+               1: { hello: 'world', example: true },
+               2: {some: 'test', data: 'here'},
+               3: {some: 'more test', data: 'here'},
+           }
+       }
+    }
+
+#### Without autoPk
+
+Sometimes it is easier to use non-integer keys, particularly when the model has an attribute that you would naturally refer to it by (e.g. a 'name' attribute). To use manual pks, omit the `true` argument to actions.create, and remember to add in your custom model id.
+
+    const manualModelCreate = actions.create('my model'); // note the missing true argument
+    store.dispatch(manualModelCreate({ a: 1, example: false },
+                                     'my custom model id')) // manual model id here
+
+We've given our new instance the unique id `my custom model id`, and stored it in the store. If we add additional instances we will need to give these unique id's as well, unless we want to overwrite previous models.
+
+    store.dispatch(manualModelCreate({ a: 1, example: false }, 'custom1'))
+    store.dispatch(manualModelCreate({ b: 2, c: true }, 'custom2'))
+
+After these updates, the store looks like:
+
+    >> store.getState()
+    {
+       "entities": {
+           "myModel": {
+               1: { hello: 'world', example: true },
+               2: {some: 'test', data: 'here'},
+               3: {some: 'more test', data: 'here'},
+               "my custom model id": { a: 1, example: false },
+               "custom1": { a: 1, example: false },
+               "custom2": { b: 2, c: true },
+           }
+       }
+    }
+
+### Bulk creating instances
+
+We can bulk create instances using the `bulkUpdate()` action. This will directly set the contents of the models store, overwriting existing models with the same id.
+
+    let bulkUpdateMyModel = actions.bulkUpdate('myModel');
+    store.dispatch(bulkUpdateMyModel(
         {
             2: {new: 'model data', overrides: 'old data', for: 'model id 2' },
             4: {'this': 'is a new model'},
         }
-    ))
+    ));
     
-If there are multiple models that we want to bulk create for (e.g. rehydrating the application state), we can use `allModelBulkUpdate()` achieve this. Because this function updates all models, it does not need to be specialised for a particular model.
-
-    const model2Updates = {1: {a:1}, 2: {b:1}};
-    const model3Updates = {1: {c:1}, 2: {d:1}, 'non integer id': {blah: 'blah'}};
-    store.dispatch(actions.allModelBulkUpdate({
-        model2: model2Updates,
-        model3: model3Updates,
-    }));
-
-The final state after all of this looks like:
-
-
+If there are multiple models that we want to bulk create for (i.e. when rehydrating the application state), we can use `allModelBulkUpdate()` achieve this. Because this function updates all models, it does not need to be specialised for a particular model.
 
 ### Updating instances
 
-Updating instances has a similar interface. It takes the instances unique id and an object containing the instance properties you want to overwrite.
+Updating instances has a similar interface. It takes the instance's unique id and an object containing the instance properties you want to add or overwrite.
     
-    store.dispatch(actions.update('my model')(1, {newProperty: 'hello'}))
+    let updateMyModel = actions.update('myModel');
+    store.dispatch(updateMyModel(1, { 
+        newProperty: 'asdf',
+        hello: 'new data',
+    }));
 
-If you have some real fancy models that need to do more than just update a property, you can provide a `customReducer` function as the last argument. This function takes the single entity, and returns the updated entity.
+The model instance `1` will now be:
 
-    store.dispatch(actions.update('my model')(1, undefined, (entity)=> ({...entity, a: 3}) ))
+    {
+        example: true,
+        hello: 'new data',
+        newProperty: 'asdf',
+    }
+
+If you have some real fancy models that need to do more than just update a property, you can provide a `customReducer` function as the last argument. This `customReducer` function takes the single entity, and returns the updated entity.
+
+    store.dispatch(updateMyModel(1, undefined, (entity) => ({
+        a: 3,
+    })));
+    
+The model instance with pk `1` will now only contain what the `customReducer` returned:
+
+    {
+        a: 3,
+    }
 
 ### Retrieving instances
 
 Retrieving data from the store is done via the selectors interface. The selectors interface takes the store state, and a `where` object, specifying the attributes that the model objects need to contain in order to be returned. To return all instances, just omit a `where` object from the second argument.
 
-    // get everything
-    selectors.get('my model')(store.getState())
-    > [{hello:'world', example:true}, {a:1,example:false}, {b:2, c: true}]
     
-    // only get items where example is true
-    selectors.get('my model')(store.getState(), {example: true})
-    > [{hello:'world', example:true}]
-    
-If we want data from another model, we just specify that model name first.
+    // create our customised selector
+    const myModelGet = selectors.get('myModel');
 
-    selectors.get('model2')(store.getState())
-    > [] // we haven't added any instances of this model type
+    // get everything
+    myModelGet(state)
+    
+    // only get items that satisfy 'where' conditions
+    myModelGet(state, { data: 'here' })
+    > [{some: 'more test', data: 'here', id: 3}]
     
 If we only want a single model instance the `getOne` interface is provided.
 
-    selectors.getOne('my model')(store.getState(), { id:1 })
-    > {}
+    const myModelGetOne = selectors.getOne('myModel');
+
+    myModelGetOne(state, { id:1 })
+    > { a: 3 }
 
 If more than one instance is found, it will warn you in the console and return the first instance. If nothing is found it will warn you and return `undefined`.
-
 
 ## Suggested Real World Usage
 ### Project setup
@@ -150,14 +216,13 @@ In each actions file, you have something like:
 Now the `myModel` actions can be imported and used directly wherever they are needed.
     
     import * as myModelActions from './models/myModel/actions.js';
-    myModelActions.create(1, {test:true});
+    myModelActions.create(1, { test: true });
 
 The same idea (producing specialised functions via closures) goes for reducers:
 
     // reducers.js
     import { reducer } from 'redux-models';
-    const reducer = reducer('myModel');
-    export default reducer;
+    export default reducer('myModel');;
 
 And for selectors:
 
@@ -168,15 +233,4 @@ And for selectors:
     export const getOne = selectors.getOne(modelName);
 
 In this way everything relating to getting and setting data on a particular model is kept in the same spot, and they all share a common interface.
-
-Final suggestions:
-
-* At some point you will need custom actions (e.g. for api responses). Use the redux-models versions as building blocks for these custom functions and add these to the actions.js file.
-* You can also keep your Normalizr schema in this directory `schema.js`, useful for wrangling api responses.
-
-### React-Redux
-
-The reducers and actions are agnostic what presentation framework is being used.
-
-The selectors can be directly used within any context that has access to state, whether it be within `mapStateToProps`, or within a thunk that has access to `getState()`. 
 
