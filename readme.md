@@ -3,36 +3,32 @@
 
 `redux-simple-models` is a simple interface for creating, updating, deleting and retrieving data from a redux store.
 
-Some example usage follows.
-
 Store data in redux store:
 
-    > dispatch(myModelCreate({'some': 'model data'})); 
-    > dispatch(myModelCreate({'example': 'usage', 'asdf': true}));
+    > dispatch(myModelCreate({ some: 'model data' }));
+    > dispatch(myModelCreate({ example: 'usage', asdf: true }));
     
 Get data from store (note automatic integer ids):
 
     > myModelGet(state);
-    [{id: 1, 'some': 'model data'}, {id: 2, 'example': 'usage', 'asdf': true}]
+    [{ id: 1, 'some': 'model data'}, {id: 2, 'example': 'usage', 'asdf': true }]
     
 Get data from store satisfying some `where` parameters:
 
     > myModelGet(state, {'example': 'usage'})
-    [{id: 1, 'example': 'usage', 'asdf': true}]
+    [{ id: 1, 'example': 'usage', 'asdf': true }]
     
 Update data:
 
     > dispatch(myModelUpdate(1, {'example': 'new'}))
-    // GetOne will only get one model
     > myModelGetOne(state, {'example': 'new'})
-    {id: 1, 'example': 'new', 'asdf': true}
+    { id: 1, 'example': 'new', 'asdf': true }
 
 Delete model by id
 
     > dispatch(myModelDelete(1))
-    // get all models
     > myModelGet(state)
-    [{id: 2, 'example': 'usage', 'asdf': true}]
+    [{ id: 2, 'example': 'usage', 'asdf': true }]
 
 These examples assume we have a model called `myModel`, and have created our model functions incorporating this model name. These `myModel*` functions could be called whatever the user desires.
 
@@ -61,12 +57,12 @@ First setup the store with the required model reducers. Each model needs its own
 
     const store = createStore(topLevelReducer);
 
-### Creating instances
+### Creating model instances
 
-We can add models to the store using `actions.create` and telling it the name of the model each time:
+We can add instances to the store using `actions.create` and telling it the name of the model each time:
 
     const modelInstance = { hello: 'world', example: true };
-    const storeAction = actions.create('my model', true)(modelInstance);
+    const storeAction = actions.create('myModel', true)(modelInstance);
     store.dispatch(storeAction);
 
 But, for convenience, we create a customised `create` function for our model:
@@ -95,14 +91,14 @@ The `true` argument in `actions.create` is for the autoPk option which provides 
 
 Sometimes it is easier to use non-integer keys, particularly when the model has an attribute that you would naturally refer to it by (e.g. a 'name' attribute). To use manual pks, omit the `true` argument to actions.create, and remember to add in your custom model id.
 
-    const manualModelCreate = actions.create('my model'); // note the missing true argument
+    const manualModelCreate = actions.create('myModel'); // note the missing true argument
     store.dispatch(manualModelCreate({ a: 1, example: false },
                                      'my custom model id')) // manual model id here
 
 We've given our new instance the unique id `my custom model id`, and stored it in the store. If we add additional instances we will need to give these unique id's as well, unless we want to overwrite previous models.
 
-    store.dispatch(manualModelCreate({ a: 1, example: false }, 'custom1'))
-    store.dispatch(manualModelCreate({ b: 2, c: true }, 'custom2'))
+    store.dispatch(manualModelCreate({ a: 1, example: false }, 'custom1'));
+    store.dispatch(manualModelCreate({ b: 2, c: true }, 'custom2'));
 
 After these updates, the store looks like:
 
@@ -127,12 +123,12 @@ We can bulk create instances using the `bulkUpdate()` action. This will directly
     let bulkUpdateMyModel = actions.bulkUpdate('myModel');
     store.dispatch(bulkUpdateMyModel(
         {
-            2: {new: 'model data', overrides: 'old data', for: 'model id 2' },
-            4: {'this': 'is a new model'},
+            2: {new: 'model data', overrides: 'old data', for: 'model instance id 2' },
+            4: {'this': 'is a new model instance'},
         }
     ));
     
-If there are multiple models that we want to bulk create for (i.e. when rehydrating the application state), we can use `allModelBulkUpdate()` achieve this. Because this function updates all models, it does not need to be specialised for a particular model.
+If there are multiple models that we want to bulk create for (i.e. when rehydrating the application state), we can use `allModelBulkUpdate()` achieve this.
 
 ### Updating instances
 
