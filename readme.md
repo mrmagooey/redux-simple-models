@@ -1,4 +1,8 @@
 # redux-simple-models
+
+[![Coverage Status](https://coveralls.io/repos/github/mrmagooey/redux-simple-models/badge.svg?branch=master)](https://coveralls.io/github/mrmagooey/redux-simple-models?branch=master)
+[![Build Status](https://travis-ci.org/mrmagooey/redux-simple-models.svg?branch=master)](https://travis-ci.org/mrmagooey/redux-simple-models)
+
 ## Introduction
 
 `redux-simple-models` is a simple interface for creating, updating, deleting and retrieving data from a redux store.
