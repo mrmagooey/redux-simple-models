@@ -38,6 +38,7 @@
     "mocha-lcov-reporter": "^1.2.0",
     "nyc": "^8.1.0",
     "redux": "^3.6.0",
+    "should": "^11.1.1",
     "uglify": "^0.1.5",
     "webpack-node-externals": "^1.4.3"
   },
