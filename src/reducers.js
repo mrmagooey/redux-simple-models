@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import { omit } from 'lodash';
 
 const abstractReducer = (modelName, stateNamespace = 'entities') => (state = {}, action) => {
   switch (action.type) {
@@ -10,7 +10,7 @@ const abstractReducer = (modelName, stateNamespace = 'entities') => (state = {},
       };
 
     case `UPDATE_${modelName.toUpperCase()}`:
-      if (_.isFunction(action.payload.customReducer)) {
+      if (typeof action.payload.customReducer === 'function') {
         return {
           ...state,
           [action.payload.id]: action.payload.customReducer(state[action.payload.id]),
@@ -25,7 +25,7 @@ const abstractReducer = (modelName, stateNamespace = 'entities') => (state = {},
       };
 
     case `DELETE_${modelName.toUpperCase()}`:
-      return _.omit(state, action.payload.id);
+      return omit(state, action.payload.id);
 
     case `BULK_UPDATE_${modelName.toUpperCase()}`:
       return {

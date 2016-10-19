@@ -90,12 +90,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var create = exports.create = function create(modelName) {
-	  return function (id, modelObject) {
+	var create = exports.create = function create(modelName, autoPk) {
+	  var autoId = 0;
+	  return function (modelObject) {
+	    var id = arguments.length <= 1 || arguments[1] === undefined ? undefined : arguments[1];
+
+	    autoId++;
+	    var modelId = void 0;
+	    if (autoPk === true) {
+	      modelId = autoId;
+	    } else {
+	      if (typeof id === 'undefined') {
+	        throw new Error("id undefined for model " + modelName);
+	      }
+	      modelId = id;
+	    }
 	    return {
 	      type: "CREATE_" + modelName.toUpperCase(),
 	      payload: {
-	        id: id,
+	        id: modelId,
 	        modelObject: modelObject
 	      }
 	    };
@@ -115,23 +128,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	};
 
-	var bulkUpdate = exports.bulkUpdate = function bulkUpdate(modelName) {
-	  return function (entities) {
-	    return {
-	      type: "BULK_UPDATE_" + modelName.toUpperCase(),
-	      payload: {
-	        entities: entities
-	      }
-	    };
-	  };
-	};
-
 	var del = exports.del = function del(modelName) {
 	  return function (id) {
 	    return {
 	      type: "DELETE_" + modelName.toUpperCase(),
 	      payload: {
 	        id: id
+	      }
+	    };
+	  };
+	};
+
+	var bulkUpdate = exports.bulkUpdate = function bulkUpdate(modelName) {
+	  return function (entities) {
+	    return {
+	      type: "BULK_UPDATE_" + modelName.toUpperCase(),
+	      payload: {
+	        entities: entities
 	      }
 	    };
 	  };
@@ -166,10 +179,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _lodash = __webpack_require__(5);
 
-	var _ = _interopRequireWildcard(_lodash);
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	var abstractReducer = function abstractReducer(modelName) {
@@ -184,13 +193,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return (0, _extends6.default)({}, state, (0, _defineProperty3.default)({}, action.payload.id, action.payload.modelObject));
 
 	      case 'UPDATE_' + modelName.toUpperCase():
-	        if (_.isFunction(action.payload.customReducer)) {
+	        if (typeof action.payload.customReducer === 'function') {
 	          return (0, _extends6.default)({}, state, (0, _defineProperty3.default)({}, action.payload.id, action.payload.customReducer(state[action.payload.id])));
 	        }
 	        return (0, _extends6.default)({}, state, (0, _defineProperty3.default)({}, action.payload.id, (0, _extends6.default)({}, state[action.payload.id], action.payload.modelObject)));
 
 	      case 'DELETE_' + modelName.toUpperCase():
-	        return _.omit(state, action.payload.id);
+	        return (0, _lodash.omit)(state, action.payload.id);
 
 	      case 'BULK_UPDATE_' + modelName.toUpperCase():
 	        return (0, _extends6.default)({}, state, action.payload.entities);
