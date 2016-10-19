@@ -91,7 +91,7 @@ The `true` argument in `actions.create` is for the autoPk option which provides 
        }
     }
 
-#### Without autoPk
+#### Without automatic integer ids
 
 Sometimes it is easier to use non-integer keys, particularly when the model has an attribute that you would naturally refer to it by (e.g. a 'name' attribute). To use manual pks, omit the `true` argument to actions.create, and remember to add in your custom model id.
 
