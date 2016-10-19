@@ -12,6 +12,7 @@
     "test": "NODE_ENV=test node_modules/.bin/mocha --compilers js:babel-core/register tests",
     "test-watch": "NODE_ENV=test node_modules/.bin/mocha --compilers js:babel-core/register --watch tests",
     "test-coverage": "NODE_ENV=test nyc npm test",
+    "test-on-travis": "NODE_ENV=test nyc npm test && nyc report --reporter=text-lcov | coveralls",
     "build-js": "webpack",
     "minify": "uglifyjs --compress --mangle --screw-ie8 --output build/redux-simple-models.min.js -- build/redux-simple-models.js",
     "build": "npm run-script build-js && npm run-script minify"
@@ -31,8 +32,10 @@
     "babel-preset-stage-0": "^6.5.0",
     "babel-preset-stage-2": "^6.13.0",
     "babelify": "^7.3.0",
+    "coveralls": "^2.11.14",
     "cross-env": "^2.0.1",
     "mocha": "^3.0.2",
+    "mocha-lcov-reporter": "^1.2.0",
     "nyc": "^8.1.0",
     "redux": "^3.6.0",
     "uglify": "^0.1.5",
