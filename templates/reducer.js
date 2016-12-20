@@ -1,3 +1,3 @@
 import { reducer } from 'redux-simple-models';
 
-export default reducer('{{ name }}');;
+export default reducer('{{ name }}');
