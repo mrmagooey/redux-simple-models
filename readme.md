@@ -5,7 +5,7 @@
 
 ## Introduction
 
-`redux-simple-models` is a simple interface for creating, updating, deleting and retrieving data from a redux store.
+`redux-simple-models` is a simple interface for creating, updating, deleting and retrieving data from a redux store. It takes care of creating a default set of actions, a standard reducer, and a set of selectors for retrieving data.
 
 Store data in redux store:
 
