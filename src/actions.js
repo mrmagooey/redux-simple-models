@@ -1,61 +1,55 @@
 
-export const create = (modelName, autoPk) => {
-  let autoId = 0;
+export const create = (modelName) => {
   return (modelObject, id = undefined) => {
-    autoId++;
-    let modelId;
-    if (autoPk === true) {
-      modelId = autoId;
-    } else {
-      if (typeof id === 'undefined') {
-        throw new Error(`id undefined for model ${modelName}`);
-      }
-      modelId = id;
-    }
     return {
       type: `CREATE_${modelName.toUpperCase()}`,
       payload: {
-        id: modelId,
         modelObject,
       },
     };
   };
 };
 
-export const update = (modelName) => (id, modelObject, customReducer) => {
+export const update = (modelName) => (where, modelObject, customReducer) => {
+  if (typeof where !== "object") {
+    throw new Error("Update() `where` argument needs to be an object");
+  }
   return {
     type: `UPDATE_${modelName.toUpperCase()}`,
     payload: {
-      id,
+      where,
       modelObject,
       customReducer,
     },
   };
 };
 
-export const del = (modelName) => (id) => {
+export const del = (modelName) => (where) => {
+  if (typeof where !== "object") {
+    throw new Error("Delete() `where` argument needs to be an object");
+  }
   return {
     type: `DELETE_${modelName.toUpperCase()}`,
     payload: {
-      id,
+      where,
     },
   };
 };
 
-export const bulkUpdate = (modelName) => (entities) => {
+export const bulkCreate = (modelName) => (entities) => {
   return {
-    type: `BULK_UPDATE_${modelName.toUpperCase()}`,
+    type: `BULK_CREATE_${modelName.toUpperCase()}`,
     payload: {
       entities,
     },
   };
 };
 
-export const allModelBulkUpdate = (entities) => {
+export const allModelBulkCreate = (entities) => {
   return {
-    type: "BULK_UPDATE",
+    type: "BULK_CREATE",
     payload: {
       entities,
     },
   };
-}
+};

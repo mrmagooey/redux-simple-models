@@ -19,7 +19,6 @@ describe('actions', function() {
       const expectedAction = {
         type: "CREATE_TESTMODEL",
         payload: {
-          id: modelId,
           modelObject: modelObject,
         },
       };
@@ -38,23 +37,17 @@ describe('actions', function() {
       const expectedAction1 = {
         type: "CREATE_ANOTHERTESTMODEL",
         payload: {
-          id: 1,
           modelObject: modelObject,
         },
       };
-      assert.deepEqual(actions.create(modelName, true)(modelObject), expectedAction1);
+      assert.deepEqual(actions.create(modelName)(modelObject), expectedAction1);
 
       const expectedAction2 = {
         type: "CREATE_ANOTHERTESTMODEL",
         payload: {
-          id: 2,
           modelObject: modelObject,
         },
       };
-    });
-
-    it('should complain about a lack of custom id', () => {
-      assert.throws(() => {actions.create('blah')({ data: 1 });}, /id undefined/);
     });
 
   });
@@ -73,12 +66,24 @@ describe('actions', function() {
       const expectedAction = {
         type: "UPDATE_TESTMODEL",
         payload: {
-          id: modelId,
+          where: { id: modelId },
           modelObject: modelObject,
           customReducer: undefined,
         },
       };
-      assert.deepEqual(actions.update(modelName)(modelId, modelObject), expectedAction);
+      assert.deepEqual(actions.update(modelName)({ id:modelId }, modelObject), expectedAction);
+    });
+
+    it('should throw an execption if the `where` object is missing or not an object', () => {
+      assert.throws(()=>{
+        actions.update('test')(undefined, {});
+      }, /needs to be an object/);
+      assert.throws(()=>{
+        actions.update('test')('hello', {});
+      }, /needs to be an object/);
+      assert.throws(()=>{
+        actions.update('test')(2, {});
+      }, /needs to be an object/);
     });
   });
 
@@ -89,11 +94,23 @@ describe('actions', function() {
       const expectedAction = {
         type: "DELETE_TESTMODEL",
         payload: {
-          id: modelId,
+          where: { id:modelId },
         },
       };
-      assert.deepEqual(actions.del(modelName)(modelId), expectedAction);
+      assert.deepEqual(actions.del(modelName)({ id:modelId }), expectedAction);
     });
+    it('should throw an execption if the `where` object is missing or not an object', () => {
+      assert.throws(()=>{
+        actions.del('test')(undefined);
+      }, /needs to be an object/);
+      assert.throws(()=>{
+        actions.update('test')('hello');
+      }, /needs to be an object/);
+      assert.throws(()=>{
+        actions.update('test')(2);
+      }, /needs to be an object/);
+    });
+
   });
 
   describe('allModelBulkUpdate', () => {
@@ -113,13 +130,12 @@ describe('actions', function() {
           }
         }
       };
-      assert.deepEqual(actions.allModelBulkUpdate(entities),
-                       {
-                         type: 'BULK_UPDATE',
-                         payload: {
-                           entities,
-                         }
-                       }
+      assert.deepEqual(actions.allModelBulkCreate(entities), {
+        type: 'BULK_CREATE',
+        payload: {
+          entities,
+        }
+      }
                       );
     });
   });
@@ -128,6 +144,16 @@ describe('actions', function() {
 
 
 describe('reducer', ()=> {
+  const modelName = 'myModel';
+  const myModel = reducer(modelName);
+  const topLevelReducer = combineReducers({
+    entities: combineReducers({
+      myModel,
+      anotherModel: reducer('anotherModel'),
+      blah: reducer('blah'),
+    }),
+  });
+  const store = createStore(topLevelReducer);
   
   it('can create reducers for models', () => {
     const modelName = 'wew lad';
@@ -137,13 +163,134 @@ describe('reducer', ()=> {
     });
   });
 
-  it('can create new instances in the store');
+  it('can create new instances in the store', () => {
+    store.dispatch(actions.create(modelName)({ test: 'data', id: 'something' })); // manual id
+    store.dispatch(actions.create(modelName)({ test: 'data' })); // auto id
+    store.dispatch(actions.create(modelName)({ number: 3 })); // auto id
+    assert.deepEqual(store.getState(), {
+      entities: {
+        myModel: {
+          something: { test: 'data' },
+          1: { test: 'data' },
+          2: { number: 3 }
+        },
+        anotherModel: {},
+        blah: {},
+      }
+    });
+  });
   
-  it('can update instances in the store');
+  it('can update instances in the store', () => {
+    // update via parameters
+    store.dispatch(actions.update(modelName)({ test: 'data'}, { more: 'data'}));
+    assert.deepEqual(store.getState(), {
+      entities: {
+        myModel: {
+          something: { test: 'data', more: 'data' },
+          1: { test: 'data', more: 'data' },
+          2: { number: 3 }
+        },
+        anotherModel: {},
+        blah: {},
+      }
+    });
+    // update via id
+    store.dispatch(actions.update(modelName)({ id: 1}, { blah: 'blah' }));
+    assert.deepEqual(store.getState(), {
+      entities: {
+        myModel: {
+          something: { test: 'data', more: 'data' },
+          1: { test: 'data', more: 'data', blah: 'blah' },
+          2: { number: 3 }
+        },
+        anotherModel: {},
+        blah: {},
+      }
+    });
+  });
 
-  it('can delete instances in the store');
+  it('can delete instances in the store', () => {
+    store.dispatch(actions.del(modelName)({ id: 1 }));
+    assert.deepEqual(store.getState(), {
+      entities: {
+        myModel: {
+          something: { test: 'data', more: 'data' },
+          2: { number: 3 },
+        },
+        anotherModel: {},
+        blah: {},
+      }
+    });
+  });
 
-  it('can use the customReducer when updating a model');
+  it('can use the customReducer when updating a model', () => {
+    store.dispatch(actions.update(modelName)({ id: 2 }, undefined, (entity) => {
+      return { number: entity.number + 1};
+    }));
+    assert.deepEqual(store.getState(), {
+      entities: {
+        myModel: {
+          something: { test: 'data', more: 'data' },
+          2: { number: 4 },
+        },
+        anotherModel: {},
+        blah: {},
+      }
+    });    
+  });
+
+  it('can bulk create invididual models', () => {
+    store.dispatch(actions.bulkCreate(modelName)({
+      0: { new: 'data' },
+      1: { foo: 'bar' },
+      something: { miami: 'dolphins' }
+    }));
+    assert.deepEqual(store.getState(), {
+      entities: {
+        myModel: {
+          0: { new: 'data' },
+          1: { foo: 'bar' },
+          something: { miami: 'dolphins' },
+          2: { number: 4 },
+        },
+        anotherModel: {},
+        blah: {},
+      }
+    });
+  });
+
+  it('can bulk create across entire store', () => {
+    store.dispatch(actions.allModelBulkCreate({
+       myModel: {
+        0: { new: 'data' },
+        1: { foo: 'bar' },
+       },
+      anotherModel: {
+        0: { new: 'data' },
+        1: { foo: 'bar' },
+      },
+      badModel: {
+        0: {
+          description: 'there is no reducer for this model, so it won\'t get put in the store'
+        }
+      }
+    }));
+    assert.deepEqual(store.getState(), {
+      entities: {
+        myModel: {
+          0: { new: 'data' },
+          1: { foo: 'bar' },
+          something: { miami: 'dolphins' },
+          2: { number: 4 },
+        },
+        anotherModel: {
+          0: { new: 'data' },
+          1: { foo: 'bar' },
+        },
+        blah: {},
+      }
+    });
+  });
 
 });
 
@@ -167,7 +314,7 @@ describe('selectors', ()=> {
       z:1,
     }
   };
-  store.dispatch(actions.bulkUpdate('myModel')(models));
+  store.dispatch(actions.bulkCreate('myModel')(models));
 
   it('can get models', () => {
     const a = selectors.get('myModel')(store.getState());
@@ -192,39 +339,6 @@ describe('selectors', ()=> {
 });
 
 describe('readme getting started examples', ()=> {
-
-  it('the abridged introduction example should work as advertised', () => {
-    // the bit we don't show
-    const store = createStore(combineReducers({
-      entities: combineReducers({ myModel: reducer('myModel')}),
-    }));
-    const myModelCreate = actions.create('myModel', true);
-    const myModelUpdate = actions.update('myModel');
-    const myModelDelete = actions.del('myModel');
-    const myModelGet = selectors.get('myModel');
-    const myModelGetOne = selectors.getOne('myModel');
-
-    // the bit we do show
-    store.dispatch(myModelCreate({'some': 'model data'})); 
-    store.dispatch(myModelCreate({'example': 'usage', 'asdf': true}));
-    assert.deepEqual([{id: 1, 'some': 'model data'}, {id: 2, 'example': 'usage', 'asdf': true}],
-                     myModelGet(store.getState()));
-
-    assert.deepEqual(myModelGet(store.getState(), {'example': 'usage'}),
-                     [{id: 2, 'example': 'usage', 'asdf': true}]);
-
-    store.dispatch(myModelUpdate(2, {'example': 'new'}));
-    assert.deepEqual(myModelGetOne(store.getState(), {'example': 'new'}),
-                     {id: 2, 'example': 'new', 'asdf': true});
-
-    // delete model by id
-    store.dispatch(myModelDelete(1));
-    // get all models
-    assert.deepEqual(myModelGet(store.getState()),
-                     [{id: 2, 'example': 'new', 'asdf': true}]);
-
-  });
-
   it('the full examples should work as advertised', ()=> {
     // store setup
     const entityReducers = combineReducers({
@@ -236,11 +350,19 @@ describe('readme getting started examples', ()=> {
     });
 
     const store = createStore(topLevelReducer);
-    const modelInstance = { hello: 'world', example: true };
-    const storeAction = actions.create('myModel')(modelInstance, '0');
-    store.dispatch(storeAction);
 
-    const myModelCreate = actions.create('myModel', true);
+    const modelInstance = { hello: 'world', example: true };
+    const storeAction = actions.create('myModel')(modelInstance);
+    store.dispatch(storeAction);
+    assert.deepEqual(store.getState(),
+                     {
+                       "entities": {
+                         "myModel": {
+                           1: { hello: 'world', example: true },
+                         }
+                       }
+                     });
+    const myModelCreate = actions.create('myModel');
 
     store.dispatch(myModelCreate({some: 'test', data: 'here'}));
     store.dispatch(myModelCreate({some: 'more test', data: 'here'}));
@@ -248,27 +370,27 @@ describe('readme getting started examples', ()=> {
                      {
                        "entities": {
                          "myModel": {
-                           0: { hello: 'world', example: true },
-                           1: { some: 'test', data: 'here'},
-                           2: { some: 'more test', data: 'here'},
+                           1: { hello: 'world', example: true },
+                           2: { some: 'test', data: 'here'},
+                           3: { some: 'more test', data: 'here'},
                          }
                        }
                      });
 
-    const manualModelCreate = actions.create('myModel'); // note the missing true argument
-    store.dispatch(manualModelCreate({ a: 1, example: false },
-                                     'my custom model id')); // manual model id here
+    const manualModelCreate = actions.create('myModel'); 
+    store.dispatch(manualModelCreate({ a: 1, example: false,
+                                       id: 'my custom model id'})); // manual model id here
 
-    store.dispatch(manualModelCreate({ a: 1, example: false }, 'custom1'));
-    store.dispatch(manualModelCreate({ b: 2, c: true }, 'custom2'));
+    store.dispatch(manualModelCreate({ a: 1, example: false, id: 'custom1'}));
+    store.dispatch(manualModelCreate({ b: 2, c: true, id: 'custom2' }));
     
     assert.deepEqual(store.getState(),
                      {
                        "entities": {
                          "myModel": {
-                           0: { hello: 'world', example: true },
-                           1: {some: 'test', data: 'here'},
-                           2: {some: 'more test', data: 'here'},
+                           1: { hello: 'world', example: true },
+                           2: {some: 'test', data: 'here'},
+                           3: {some: 'more test', data: 'here'},
                            "my custom model id": { a: 1, example: false },
                            "custom1": { a: 1, example: false },
                            "custom2": { b: 2, c: true },
@@ -277,5 +399,34 @@ describe('readme getting started examples', ()=> {
                      });
     
   });
+  it(': old example', () => {
+    // the bit we don't show
+    const store = createStore(combineReducers({
+      entities: combineReducers({ myModel: reducer('myModel')}),
+    }));
+    const myModelCreate = actions.create('myModel', true);
+    const myModelUpdate = actions.update('myModel');
+    const myModelDelete = actions.del('myModel');
+    const myModelGet = selectors.get('myModel');
+    const myModelGetOne = selectors.getOne('myModel');
+    // the bit we do show
+    store.dispatch(myModelCreate({'some': 'model data'})); 
+    store.dispatch(myModelCreate({'example': 'usage', 'asdf': true}));
+    assert.deepEqual([{id: 1, 'some': 'model data'}, {id: 2, 'example': 'usage', 'asdf': true}],
+                     myModelGet(store.getState()));
+    assert.deepEqual(myModelGet(store.getState(), {'example': 'usage'}),
+                     [{id: 2, 'example': 'usage', 'asdf': true}]);
+
+    store.dispatch(myModelUpdate({ id:2 }, {'example': 'new'}));
+    assert.deepEqual(myModelGetOne(store.getState(), {'example': 'new'}),
+                     { id: 2, 'example': 'new', 'asdf': true });
+    // delete model by id
+    store.dispatch(myModelDelete({ id: 1 }));
+    // get all models
+    assert.deepEqual(myModelGet(store.getState()),
+                     [{id: 2, 'example': 'new', 'asdf': true}]);
+
+  });
+
 
 });

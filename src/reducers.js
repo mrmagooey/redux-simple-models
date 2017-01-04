@@ -1,52 +1,110 @@
-import { omit } from 'lodash';
+import { get } from './selectors';
+import has from 'lodash/has';
 
-const abstractReducer = (modelName, stateNamespace = 'entities') => (state = {}, action) => {
-  switch (action.type) {
+const omit = (obj, prop) => {
+  let {[prop]: omit, ...res} = obj;
+  return res;
+};
 
-    case `CREATE_${modelName.toUpperCase()}`:
-      return {
+const update = (modelName, namespace, state, action) => {
+  // in order for get() to work we need to recreate the state a bit
+  const fakeState = {
+    [namespace]: {
+      [modelName]: state
+    }
+  };
+  let models = get(modelName)(fakeState, action.payload.where);
+  let ids = models.map(x => x.id);
+  ids.map((id) => {
+    if (typeof action.payload.customReducer === 'function') {
+      state = {
         ...state,
-        [action.payload.id]: action.payload.modelObject,
+        [id]: action.payload.customReducer(state[id]),
       };
-
-    case `UPDATE_${modelName.toUpperCase()}`:
-      if (typeof action.payload.customReducer === 'function') {
-        return {
-          ...state,
-          [action.payload.id]: action.payload.customReducer(state[action.payload.id]),
-        };
-      }
-      return {
+    } else {
+      state = {
         ...state,
-        [action.payload.id]: {
-          ...state[action.payload.id],
+        [id]: {
+          ...state[id],
           ...action.payload.modelObject,
         },
       };
+    }
+  });
+  return state;
+};
 
-    case `DELETE_${modelName.toUpperCase()}`:
-      return omit(state, action.payload.id);
+const del = (modelName, namespace, state, action) => {
+  // same as for update, recreate the state a bit
+  const models = get(modelName)({
+    [namespace]: {
+      [modelName]: state
+    }
+  }, action.payload.where);
+  const ids = models.map(x => x.id);
+  ids.map((id) => {
+    state = omit(state, id);
+  });
+  return state;
+};
 
-    case `BULK_UPDATE_${modelName.toUpperCase()}`:
-      return {
-        ...state,
-        ...action.payload.entities
-      };
+const abstractReducer = (modelName, namespace = 'entities') => {
+  let autoId = 0;
+  return (state = {}, action) => {
+    switch (action.type) {
 
-    case 'BULK_UPDATE':
-      if (action.payload.entities[modelName]) {
+      case `CREATE_${modelName.toUpperCase()}`:
+        let modelId;
+        let modelObject;
+        // if the modelObject has an id, this is the canonical id to use
+        if (action.payload.modelObject.id) {
+          modelId = action.payload.modelObject.id;
+          modelObject = omit(action.payload.modelObject, 'id');
+        } else {
+          // otherwise create one
+          let found = false;
+          while(!found) {
+            autoId++;
+            if (!has(state, [namespace, modelName, autoId])) {
+              found = true;
+            }
+          }
+          modelId = autoId;
+          modelObject = action.payload.modelObject;
+        }
         return {
           ...state,
-          ...action.payload.entities[modelName]
+          [modelId]: modelObject,
         };
-      } else {
+
+      case `UPDATE_${modelName.toUpperCase()}`:
+        return update(modelName, namespace, state, action);
+
+      case `DELETE_${modelName.toUpperCase()}`:
+        return del(modelName, namespace, state, action);
+
+      case `BULK_CREATE_${modelName.toUpperCase()}`:
+        return {
+          ...state,
+          ...action.payload.entities
+        };
+
+      // this will match in multiple reducers, which is how it updates all the models
+      case 'BULK_CREATE': 
+        if (action.payload.entities[modelName]) {
+          return {
+            ...state,
+            ...action.payload.entities[modelName]
+          };
+        } else {
+          return state;
+        }
+
+      default:
         return state;
-      }
 
-    default:
-      return state;
-
-  }
+    }
+  };
 };
 
 export default abstractReducer;
