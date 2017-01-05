@@ -1,6 +1,6 @@
 {
   "name": "redux-simple-models",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "getters and setters for redux models",
   "main": "build/redux-simple-models.js",
   "homepage": "https://github.com/mrmagooey/redux-models",
@@ -56,6 +56,7 @@
     "instrument": false
   },
   "dependencies": {
-    "lodash": "^4.15.0"
+    "lodash": "^4.15.0",
+    "webpack": "^1.14.0"
   }
 }
