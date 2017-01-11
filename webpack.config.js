@@ -1,5 +1,5 @@
 var path = require('path');
-var nodeExternals = require('webpack-node-externals');
+// var nodeExternals = require('webpack-node-externals');
 
 var dir_src = path.resolve(__dirname, 'src');
 var dir_html = path.resolve(__dirname, 'html');
@@ -13,7 +13,7 @@ module.exports  = {
     libraryTarget: "umd",
     library: 'redux-simple-models',
   },
-  externals: [nodeExternals()],
+  // externals: [nodeExternals()],
   module: {
     loaders: [
       {
