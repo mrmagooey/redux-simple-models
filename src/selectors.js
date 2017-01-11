@@ -6,8 +6,8 @@ import isArray from 'lodash/isArray';
 import difference from 'lodash/difference';
 
 const toPairs = (obj) => {
-  return Object.keys(obj).map((k) => [ k, obj[k] ])
-}
+  return Object.keys(obj).map((k) => [ k, obj[k] ]);
+};
 
 export const get = (entityName, stateNamespace = 'entities') => (state, where = {}) => {
   return toPairs(state[stateNamespace][entityName])
@@ -45,7 +45,7 @@ export const get = (entityName, stateNamespace = 'entities') => (state, where = 
         ...entityObject,
         id,
       };
-    })
+    });
 
 };
 
