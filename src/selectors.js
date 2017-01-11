@@ -1,9 +1,13 @@
-import isNaN from 'lodash/isNaN';
-import toPairs from 'lodash/toPairs';
+// import isNaN from 'lodash/isNaN';
+// import toPairs from 'lodash/toPairs';
 import has from 'lodash/has';
 import objGet from 'lodash/get';
 import isArray from 'lodash/isArray';
 import difference from 'lodash/difference';
+
+const toPairs = (obj) => {
+  return Object.keys(obj).map((k) => [ k, obj[k] ])
+}
 
 export const get = (entityName, stateNamespace = 'entities') => (state, where = {}) => {
   return toPairs(state[stateNamespace][entityName])
