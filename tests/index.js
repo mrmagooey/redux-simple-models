@@ -110,7 +110,6 @@ describe('actions', function() {
         actions.update('test')(2);
       }, /needs to be an object/);
     });
-
   });
 
   describe('allModelBulkUpdate', () => {
@@ -144,17 +143,21 @@ describe('actions', function() {
 
 
 describe('reducer', ()=> {
-  const modelName = 'myModel';
-  const myModel = reducer(modelName);
-  const topLevelReducer = combineReducers({
-    entities: combineReducers({
-      myModel,
-      anotherModel: reducer('anotherModel'),
-      blah: reducer('blah'),
-    }),
+  let store
+  beforeEach(() => {
+    // recreate the store for each test
+    const modelName = 'myModel';
+    const myModel = reducer(modelName);
+    const topLevelReducer = combineReducers({
+      entities: combineReducers({
+        myModel,
+        anotherModel: reducer('anotherModel'),
+        blah: reducer('blah'),
+      }),
+    });
+    store = createStore(topLevelReducer);
   });
-  const store = createStore(topLevelReducer);
-  
+
   it('can create reducers for models', () => {
     const modelName = 'wew lad';
     const myReducer = reducer(modelName);
@@ -164,9 +167,9 @@ describe('reducer', ()=> {
   });
 
   it('can create new instances in the store', () => {
-    store.dispatch(actions.create(modelName)({ test: 'data', id: 'something' })); // manual id
-    store.dispatch(actions.create(modelName)({ test: 'data' })); // auto id
-    store.dispatch(actions.create(modelName)({ number: 3 })); // auto id
+    store.dispatch(actions.create('myModel')({ test: 'data', id: 'something' })); // manual id
+    store.dispatch(actions.create('myModel')({ test: 'data' })); // auto id
+    store.dispatch(actions.create('myModel')({ number: 3 })); // auto id
     assert.deepEqual(store.getState(), {
       entities: {
         myModel: {
@@ -180,41 +183,68 @@ describe('reducer', ()=> {
     });
   });
   
-  it('can update instances in the store', () => {
-    // update via parameters
-    store.dispatch(actions.update(modelName)({ test: 'data'}, { more: 'data'}));
-    assert.deepEqual(store.getState(), {
-      entities: {
-        myModel: {
-          something: { test: 'data', more: 'data' },
-          1: { test: 'data', more: 'data' },
-          2: { number: 3 }
-        },
-        anotherModel: {},
-        blah: {},
-      }
+  describe('can update instances in the store', () => {
+    
+    it('via parameters', () => {
+      store.dispatch(actions.create('myModel')({ test: 'data', id: 'something' })); 
+      store.dispatch(actions.create('myModel')({ test: 'data' })); 
+      store.dispatch(actions.create('myModel')({ number: 3 }));
+
+      store.dispatch(actions.update('myModel')({ test: 'data'}, { more: 'data'}));
+      assert.deepEqual(store.getState(), {
+        entities: {
+          myModel: {
+            something: { test: 'data', more: 'data' },
+            1: { test: 'data', more: 'data' },
+            2: { number: 3 }
+          },
+          anotherModel: {},
+          blah: {},
+        }
+      });
     });
-    // update via id
-    store.dispatch(actions.update(modelName)({ id: 1}, { blah: 'blah' }));
-    assert.deepEqual(store.getState(), {
-      entities: {
-        myModel: {
-          something: { test: 'data', more: 'data' },
-          1: { test: 'data', more: 'data', blah: 'blah' },
-          2: { number: 3 }
-        },
-        anotherModel: {},
-        blah: {},
-      }
+
+    it('via id', () => {
+      const modelName = 'myModel';
+      const myModel = reducer(modelName);
+      const topLevelReducer = combineReducers({
+        entities: combineReducers({
+          myModel,
+          anotherModel: reducer('anotherModel'),
+          blah: reducer('blah'),
+        }),
+      });
+
+      const store = createStore(topLevelReducer);
+      store.dispatch(actions.create(modelName)({ test: 'data', id: 'something' })); 
+      store.dispatch(actions.create(modelName)({ test: 'data' })); 
+      store.dispatch(actions.create(modelName)({ number: 3 })); 
+
+      store.dispatch(actions.update(modelName)({ id: '1'}, { blah: 'blah' }));
+      assert.deepEqual(store.getState(), {
+        entities: {
+          myModel: {
+            something: { test: 'data' },
+            1: { test: 'data', blah: 'blah' },
+            2: { number: 3 }
+          },
+          anotherModel: {},
+          blah: {},
+        }
+      });
     });
+
   });
 
   it('can delete instances in the store', () => {
-    store.dispatch(actions.del(modelName)({ id: 1 }));
+    store.dispatch(actions.create('myModel')({ test: 'data', id: 'something' })); 
+    store.dispatch(actions.create('myModel')({ test: 'data' })); 
+    store.dispatch(actions.create('myModel')({ number: 3 })); 
+    store.dispatch(actions.del('myModel')({ id: '1' }));
     assert.deepEqual(store.getState(), {
       entities: {
         myModel: {
-          something: { test: 'data', more: 'data' },
+          something: { test: 'data' },
           2: { number: 3 },
         },
         anotherModel: {},
@@ -224,14 +254,30 @@ describe('reducer', ()=> {
   });
 
   it('can use the customReducer when updating a model', () => {
-    store.dispatch(actions.update(modelName)({ id: 2 }, undefined, (entity) => {
-      return { number: entity.number + 1};
+    store.dispatch(actions.create('myModel')({ test: 'data', id: 'something' })); 
+    store.dispatch(actions.create('myModel')({ test: 'data' })); 
+    store.dispatch(actions.create('myModel')({ number: 3, more: "data" }));
+
+    store.dispatch(actions.update('myModel')({ id: 2 }, undefined, (entity) => {
+      return {
+        ...entity,
+        number: entity.number + 1
+      };
     }));
+
     assert.deepEqual(store.getState(), {
       entities: {
         myModel: {
-          something: { test: 'data', more: 'data' },
-          2: { number: 4 },
+          something: {
+            test: 'data'
+          },
+          1: {
+            test: 'data',
+          },
+          2: {
+            number: 4,
+            more: "data",
+          },
         },
         anotherModel: {},
         blah: {},
@@ -240,7 +286,7 @@ describe('reducer', ()=> {
   });
 
   it('can bulk create invididual models', () => {
-    store.dispatch(actions.bulkCreate(modelName)({
+    store.dispatch(actions.bulkCreate('myModel')({
       0: { new: 'data' },
       1: { foo: 'bar' },
       something: { miami: 'dolphins' }
@@ -251,7 +297,6 @@ describe('reducer', ()=> {
           0: { new: 'data' },
           1: { foo: 'bar' },
           something: { miami: 'dolphins' },
-          2: { number: 4 },
         },
         anotherModel: {},
         blah: {},
@@ -280,8 +325,6 @@ describe('reducer', ()=> {
         myModel: {
           0: { new: 'data' },
           1: { foo: 'bar' },
-          something: { miami: 'dolphins' },
-          2: { number: 4 },
         },
         anotherModel: {
           0: { new: 'data' },
@@ -324,6 +367,36 @@ describe('selectors', ()=> {
   it('can getOne models', () => {
     const a = selectors.getOne('myModel')(store.getState(), {id:1});
     assert.deepEqual(a, {id: 1, c:1, z:1});
+  });
+
+  it('can check arrays', () => {
+    const newStore = createStore(combineReducers(
+      {
+        entities: combineReducers({ asdf: reducer('asdf') })
+      }
+    ));
+    newStore.dispatch(actions.bulkCreate('asdf')(
+      {
+        0: {
+          test: [1, 2, 3],
+        },
+        1: {
+          test: [2, 3, 4],
+        },
+        2: {
+          test: [3, 4, 5],
+        },
+        3: {
+          test: [9, 10, 11],
+          blah: 'blah',
+        }
+      }
+    ));
+    const a = selectors.get('asdf')(newStore.getState(), { test: [ 1 ] });
+    assert.deepEqual(a, [{ id: 0, test: [1, 2, 3] }]);
+    const b = selectors.get('asdf')(newStore.getState(), { test: [ 2 ] });
+    assert.deepEqual(b, [{ id: 0, test: [1, 2, 3] }, { id: 1, test: [2, 3, 4] }]);
+    
   });
 
   it('getOne will complain about more than one model, but still return the first one', () => {

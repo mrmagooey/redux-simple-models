@@ -34,7 +34,7 @@ Get data from store satisfying some `where` parameters, in this case, that :
     
 Update data:
 
-    > store.dispatch(actions.update('myModel')({ id:1 }, {'example': 'new'}))
+    > store.dispatch(actions.update('myModel')({ id: 1 }, {'example': 'new'}))
     > selectors.getOne('myModel')(store.getState(), {'example': 'new'})
     { id: 1, 'example': 'new', 'asdf': true }
 
@@ -179,8 +179,35 @@ If we only want a single model instance the `getOne` interface is provided.
 
 If more than one instance is found, it will warn you in the console and return the first instance. If nothing is found it will warn you and return `undefined`.
 
-## Suggested Usage
-### Project setup
+### Array `where` parameters special behaviour
+
+If you specify an array in any `where` clauses, such as:
+
+    myModelGet(state, { key: [1, 2, 3] })
+    // or 
+    actions.update({ new: 'data' }, { anotherKey: [3] })
+    
+This will *not* exactly match the model contents as is the case with strings and numbers, it will match if it is a subset of the model array. An example with a pre-prepared store:
+
+    > store.getState()
+    {
+       "entities": {
+           "myModel": {
+               1: { hello: 'world', related: [2, 3] },
+               2: {some: 'test', related: [2, 3, 4]},
+               3: {some: 'more test', related: [8, 9]},
+           }
+       }
+    }
+    > getMyModel(store.getState(), { related: [2, 3] })
+    [ 
+      { id: 1, hello: 'world', related: [2, 3]},
+      { id: 2, some: 'test', related: [2, 3, 4]}
+    ]
+
+Note that the query specifies `[2, 3]` but two models are returned, because `[2, 3]` is a subset of each models `related` value.
+
+## rsm-create
 All of these functions are closures that specialise themselves based on the first function call. This is done because it is expected that a specialised version will live within its own file and be exported. 
 
 For example, your directory structure might look like:
@@ -204,7 +231,7 @@ For example, your directory structure might look like:
 
 A script for creating model folders is shipped with this package (`rsm-create`), and can be used like:
 
-   $ rsm-create <model name>
+   $ rsm-create myModel
 
 This script will create a folder in the terminal current working directory with customised files for the model name, i.e. if you called `$ rsm-create myModel`, in the actions.js file you would have:
 

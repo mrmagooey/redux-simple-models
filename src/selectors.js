@@ -1,28 +1,38 @@
-import * as _ from 'lodash';
+import isNaN from 'lodash/isNaN';
+import toPairs from 'lodash/toPairs';
+import has from 'lodash/has';
+import objGet from 'lodash/get';
+import isArray from 'lodash/isArray';
+import difference from 'lodash/difference';
 
 export const get = (entityName, stateNamespace = 'entities') => (state, where = {}) => {
-  return _.chain(state[stateNamespace][entityName])
-    .toPairs()
+  return toPairs(state[stateNamespace][entityName])
   // `where` filter
     .filter((pair) => { 
       // if there are no where clauses
       if (Object.keys(where).length === 0) {
         return true;
       }
-      // this is trying to make integer ids into actual numbers,
-      // because integers are getting converted to strings in the reducer,
-      // which I think is a babel bug https://github.com/babel/babel/issues/4196
-      const idNumber = _.isNaN(Number(pair[0]))? pair[0] : Number(pair[0]);
-      const fullEntity = { id: idNumber,
-                           ...pair[1] };
-      return _.chain(where)
-        .toPairs()
-      // need every where key to be satisfied
+      // try and cast id to a Number
+      const idNumber = isNaN(Number(pair[0]))? pair[0] : Number(pair[0]);
+      const fullEntity = { ...pair[1], id: idNumber };
+      return toPairs(where)
         .every((wherePair) => {
+          // need every where key to be satisfied
           const [whereKey, whereValue] = wherePair;
-          return _.has(fullEntity, whereKey) && _.get(fullEntity, whereKey) === whereValue;
-        })
-        .value();
+          // early return if the key is not present
+          if (!has(fullEntity, whereKey)) {
+            return false;
+          }
+          // special checking behaviour for arrays
+          // will return true if the whereValue array is a subset of the entity value
+          if (isArray(whereValue)) {
+            const diff = difference(whereValue, objGet(fullEntity, whereKey));
+            return diff.length === 0;
+          } else { // string or number
+            return objGet(fullEntity, whereKey) === whereValue;
+          }
+        });
     })
     .map((pair) => {
       const id = pair[0];
@@ -32,7 +42,7 @@ export const get = (entityName, stateNamespace = 'entities') => (state, where = 
         id,
       };
     })
-    .value();
+
 };
 
 export const getOne = (entityName, stateNamespace = 'entities') => (state, where = {}) => {
