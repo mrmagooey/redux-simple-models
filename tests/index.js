@@ -220,7 +220,7 @@ describe('reducer', ()=> {
       store.dispatch(actions.create(modelName)({ test: 'data' })); 
       store.dispatch(actions.create(modelName)({ number: 3 })); 
 
-      store.dispatch(actions.update(modelName)({ id: '1'}, { blah: 'blah' }));
+      store.dispatch(actions.update(modelName)({ id: 1}, { blah: 'blah' }));
       assert.deepEqual(store.getState(), {
         entities: {
           myModel: {
@@ -240,7 +240,7 @@ describe('reducer', ()=> {
     store.dispatch(actions.create('myModel')({ test: 'data', id: 'something' })); 
     store.dispatch(actions.create('myModel')({ test: 'data' })); 
     store.dispatch(actions.create('myModel')({ number: 3 })); 
-    store.dispatch(actions.del('myModel')({ id: '1' }));
+    store.dispatch(actions.del('myModel')({ id: 1 }));
     assert.deepEqual(store.getState(), {
       entities: {
         myModel: {
