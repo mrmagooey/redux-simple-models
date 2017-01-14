@@ -177,7 +177,7 @@ If we only want a single model instance the `getOne` interface is provided.
     const myModelGetOne = selectors.getOne('myModel');
     myModelGetOne(state, { id:1 })
 
-If more than one instance is found, it will warn you in the console and return the first instance. If nothing is found it will warn you and return `undefined`.
+If no instances is found, or more than one instance is found, it will throw an Exception detailing the error.
 
 ### Array `where` parameters special behaviour
 
